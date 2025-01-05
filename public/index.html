@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Chat Room</title>
+    <style>
+        /* Modern CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            background-image: url(https://img.freepik.com/free-vector/happy-halloween-background-theme_52683-44522.jpg?t=st=1736102869~exp=1736106469~hmac=3b0d123510a84b73a4d62885cfebb1e7a89ea2df759149124e3c81e68af9864c&w=996);
+            background-repeat: no-repeat;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .background-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the video covers the entire container */
+    z-index: -1; /* Places the video behind the content */
+}
+        .app {
+            /* background: rgba(255, 255, 255, 0.95); */
+            
+            position: relative;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            padding: 2rem;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Join Screen Styles */
+        .join-screen {
+            text-align: center;
+        }
+
+        .join-screen h2 {
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2em;
+        }
+
+        .form {
+            margin-bottom: 1.5rem;
+        }
+
+        .form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .form input {
+            width: 100%;
+            max-width: 300px;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        /* Chat Screen Styles */
+        .chat-screen .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .my-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .other-message {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .message .name {
+            font-size: 0.8em;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .update {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+
+        .typebox {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .typebox input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .typebox input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .active-users-panel {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .active-users-panel.open {
+            right: 0;
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 1rem;
+        }
+
+        #toggle-users {
+            background: #764ba2;
+        }
+
+        .timestamp {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-top: 0.3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .app {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .messages {
+                height: calc(100vh - 250px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoplay loop muted playsinline class="background-video">
+        <source src="vid2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="app">
+        <video autoplay loop muted playsinline class="background-video">
+            <source src="vid2.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="screen join-screen active">
+            <div class="form">
+                <h2 style="color: #ddd;" >Welcome to ChatRoom</h2>
+                <label style="color: #ddd;" >Username</label>
+                <input type="text" id="username" placeholder="Enter your username">
+            </div>
+            <div class="form-input">
+                <button id="join-user">Join Chat</button>
+            </div>
+        </div>
+        <div class="screen chat-screen" style="background-image: url(https://img.freepik.com/free-photo/digital-dot-circle-technology-corporate-background_53876-97644.jpg?t=st=1736104707~exp=1736108307~hmac=bcae2bfaca40de646ccdb07a6983ae66d58c163be8d473786f7460be252b4e46&w=740);" >
+            <div class="header">
+                <div class="logo">CHATROOM</div>
+                <div class="button-container">
+                    <button id="toggle-users">Active Users</button>
+                    <button id="exit-chat">Exit</button>
+                </div>
+            </div>
+            <div class="messages">
+            </div>
+            <div class="typebox">
+                <input type="text" id="message-input" placeholder="Type your message...">
+                <button id="send-message">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users Panel -->
+    <div class="active-users-panel">
+        <h3>Active Users</h3>
+        <div class="user-list"></div>
+    </div>
+
+    <script src="socket.io/socket.io.js"></script>
+    <script>
+        (function() {
+            const app = document.querySelector('.app');
+            const socket = io();
+            let uname;
+
+            // Handle message history
+            socket.on('history', function(messages) {
+                const messageContainer = app.querySelector('.chat-screen .messages');
+                messageContainer.innerHTML = ''; // Clear existing messages
+                messages.forEach(message => {
+                    if (message.type === 'message') {
+                        renderMessage(message.username === uname ? 'my' : 'other', message);
+                    } else {
+                        renderMessage('update', message.message);
+                    }
+                });
+            });
+
+            // Handle active users panel
+            const usersPanel = document.querySelector('.active-users-panel');
+            const toggleUsersBtn = document.querySelector('#toggle-users');
+            
+            toggleUsersBtn.addEventListener('click', function() {
+                usersPanel.classList.toggle('open');
+            });
+
+            socket.on('activeUsers', function(users) {
+                const userList = document.querySelector('.user-list');
+                userList.innerHTML = '';
+                users.forEach(user => {
+                    const userEl = document.createElement('div');
+                    userEl.className = 'user-item';
+                    userEl.innerHTML = `
+                        <span class="user-status ${user.status === 'online' ? 'status-online' : 'status-offline'}"></span>
+                        <span>${user.username}</span>
+                    `;
+                    userList.appendChild(userEl);
+                });
+            });
+
+            // Join chat
+            app.querySelector('.join-screen #join-user').addEventListener("click", function() {
+                let username = app.querySelector('.join-screen #username').value;
+                if (username.length === 0) {
+                    alert('Please enter a username');
+                    return;
+                }
+                socket.emit('newuser', username);
+                uname = username;
+                app.querySelector('.join-screen').classList.remove('active');
+                app.querySelector('.chat-screen').classList.add('active');
+            });
+
+            // Enter key support for joining
+            app.querySelector('.join-screen #username').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    app.querySelector('.join-screen #join-user').click();
+                }
+            });
+
+            // Message send
+            app.querySelector('.chat-screen #send-message').addEventListener('click', sendMessage);
+
+            // Enter key support for sending messages
+            app.querySelector('.chat-screen #message-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            function sendMessage() {
+                let message = app.querySelector('.chat-screen #message-input').value;
+                if (message.length === 0) {
+                    return;
+                }
+                renderMessage("my", {
+                    username: uname,
+                    message: message
+                });
+                socket.emit('chat', { username: uname, message: message });
+                app.querySelector('.chat-screen #message-input').value = '';
+            }
+
+            // Exit chat
+            app.querySelector(".chat-screen #exit-chat").addEventListener("click", function() {
+                socket.emit("exituser", uname);
+                window.location.href = window.location.href;
+            });
+
+            // Socket events
+            socket.on('chat', function(data) {
+                renderMessage("other", data);
+            });
+
+            socket.on('update', function(message) {
+                renderMessage("update", message);
+            });
+
+            socket.on('newuser', function(data) {
+                renderMessage("update", data + " joined the chat");
+            });
+
+            function renderMessage(type, message) {
+                let messageContainer = app.querySelector('.chat-screen .messages');
+                let el = document.createElement('div');
+
+                if (type === 'my') {
+                    el.setAttribute('class', 'message my-message');
+                    el.innerHTML = `
+                        <div class="name">You</div>
+                        <div class="text">${message.message}</div>
+                    `;
+                } else if (type === "other") {
+                    el.setAttribute('class', 'message other-message');
+                    el.innerHTML = `
+                        <div class="name">${message.username}</div>
+                        <div class="text">${message.message}</div>
+                    `;
+                } else if (type === "update") {
+                    el.setAttribute('class', 'update');
+                    el.innerText = message;
+                }
+
+                messageContainer.appendChild(el);
+                messageContainer.scrollTop = messageContainer.scrollHeight - messageContainer.clientHeight;
+            }
+        })();
+    </script>
+</body>
+</html>
